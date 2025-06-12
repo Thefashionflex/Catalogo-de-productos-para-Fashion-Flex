@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPORT FLEX - CATÁLOGO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto:wght@300;400;700&family=Montserrat:wght@300;400;700&family=Bungee+Inline&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --accent-color-primary: #001f3f; /* Deep Navy Blue */
+        --cursor-color: #000000; /* Black for cursor */
+        --light-bg: #fdfdfd; 
+        --light-bg-alt: #ffffff; 
+        --text-dark-primary: #2c2c2c; 
+        --text-dark-secondary: #606060; 
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--light-bg);
+        color: var(--text-dark-primary);
+        cursor: none; 
+        overflow-x: hidden;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px; 
+      }
+      ::-webkit-scrollbar-track {
+        background: #e0e0e0; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent-color-primary); /* Navy scrollbar thumb */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #001a35; /* Darker navy on hover */
+      }
+
+      .grainy-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.025"/></svg>');
+        z-index: 1; 
+      }
+      
+      .custom-cursor { 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .cursor-dot { 
+        position: absolute; 
+        width: 8px;
+        height: 8px;
+        background-color: var(--cursor-color); /* Black cursor dot */
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        will-change: transform; 
+      }
+      .cursor-trail { 
+        position: absolute; 
+        width: 7px; 
+        height: 7px;
+        background-color: var(--cursor-color); /* Black cursor trails */
+        border-radius: 50%;
+        will-change: transform, opacity; 
+      }
+
+      .animated-line {
+        position: fixed;
+        background-color: var(--accent-color-primary); /* Navy animated lines */
+        opacity: 0.15; /* Adjusted opacity for navy */
+        z-index: 0; 
+        animation: shimmer-line 15s infinite alternate ease-in-out;
+      }
+      .line-1 {
+        width: 1px;
+        height: 60%;
+        left: 10%;
+        top: -10%;
+        animation-duration: 25s;
+        animation-delay: 0s;
+      }
+      .line-2 {
+        width: 1px;
+        height: 80%;
+        right: 15%;
+        bottom: -15%;
+        animation-duration: 20s;
+        animation-delay: 5s;
+      }
+       .line-3 {
+        width: 40%;
+        height: 1px;
+        left: -5%;
+        top: 20%;
+        animation-duration: 30s;
+        animation-delay: 2s;
+      }
+
+      @keyframes shimmer-line {
+        0% { opacity: 0.05; transform: translateY(-5%) translateX(-2%); } /* Adjusted opacity for navy */
+        50% { opacity: 0.15; transform: translateY(0%) translateX(0%); }
+        100% { opacity: 0.05; transform: translateY(5%) translateX(2%); }
+      }
+      
+      @keyframes slide-and-fade-banner {
+        0% {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        10%, 80% { /* Text visible and sliding */
+          transform: translateX(-100%);
+          opacity: 1;
+        }
+        90%, 100% { /* Text faded out */
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+      }
+
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.25.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <div class="custom-cursor">
+      <div class="cursor-dot"></div>
+    </div>
+    <script type="module" src="./bundle.js" defer></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

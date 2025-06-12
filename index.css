@@ -1,0 +1,199 @@
+
+
+      :root {
+        --accent-color-primary: #001f3f; /* Deep Navy Blue */
+        --cursor-color: #001f3f; /* Changed to navy blue for new cursor */
+        --light-bg: #fdfdfd; 
+        --light-bg-alt: #ffffff; 
+        --text-dark-primary: #2c2c2c; 
+        --text-dark-secondary: #606060; 
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-color: var(--light-bg);
+        color: var(--text-dark-primary);
+        cursor: none; 
+        overflow-x: hidden;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px; 
+      }
+      ::-webkit-scrollbar-track {
+        background: #e0e0e0; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent-color-primary); /* Navy scrollbar thumb */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #001a35; /* Darker navy on hover */
+      }
+
+      .grainy-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.025"/></svg>');
+        z-index: 1; 
+      }
+      
+      /* Styles for the simple global cursor (used on non-Catalog pages) */
+      .custom-cursor { 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw; /* Takes full viewport but elements inside are small */
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9999;
+      }
+      .cursor-dot { /* This is the simple dot for other pages */
+        position: absolute; 
+        width: 8px;
+        height: 8px;
+        background-color: var(--cursor-color); /* Uses navy as per root var */
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        will-change: transform; 
+      }
+       /* .cursor-trail for simple global cursor, not used currently by simple cursor */
+
+
+    /* Thin scrollbar for components that might need it, e.g., product form */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent-color-primary) #e0e0e0; /* thumb track */
+    }
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: #e0e0e0;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: var(--accent-color-primary);
+        border-radius: 3px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background-color: #001a35; /* Darker navy on hover */
+    }
+
+.category-nav-link {
+  position: relative; 
+  color: var(--accent-color-primary); 
+}
+
+.category-nav-link.active {
+  font-weight: 700; 
+}
+
+.category-nav-link.active::after { 
+  content: none;
+}
+
+.category-nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: -4px; 
+  left: 50%;    
+  width: 115%;  
+  height: 2px;
+  background-color: var(--accent-color-primary);
+  transform: scaleX(0) translateX(-50%); 
+  transform-origin: center; 
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none; 
+}
+
+.category-nav-link:hover::before {
+  transform: scaleX(1) translateX(-50%); 
+}
+
+/* New custom cursor styles for CatalogPage */
+.cursor {
+    width: 20px; /* CURSOR_MAIN_SIZE from JS */
+    height: 20px; /* CURSOR_MAIN_SIZE from JS */
+    border: 2px solid var(--accent-color-primary); /* Navy Blue */
+    background-color: transparent; /* Ensure no background fill */
+    border-radius: 50%;
+    position: fixed; 
+    /* left: 0; top: 0; are now dynamically set by JS */
+    z-index: 10000; 
+    pointer-events: none; 
+    transition: border-color 0.1s ease-out; /* Only border-color for CSS transition */
+    will-change: left, top, opacity, transform, border-color; /* transform for scale */
+}
+
+.cursor-trail {
+    /* width and height are set by JS */
+    background-color: var(--accent-color-primary); /* Navy Blue */
+    border-radius: 50%;
+    position: fixed; 
+    /* left: 0; top: 0; are now dynamically set by JS */
+    pointer-events: none;
+    z-index: 9999; 
+    will-change: left, top, opacity, width, height; 
+}
+
+/* Category Header Card Styling */
+.category-header-card {
+  background-color: var(--light-bg-alt);
+  border: 1px solid rgba(0, 31, 63, 0.15); /* var(--accent-color-primary) with alpha */
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+  will-change: transform, box-shadow; /* For JS tilt effect */
+}
+
+.category-header-card:hover {
+  box-shadow: 0 12px 24px rgba(0, 31, 63, 0.1); /* Navy shadow */
+  border-color: rgba(0, 31, 63, 0.4); /* var(--accent-color-primary) with alpha */
+}
+
+.category-header-card::before { /* Animated bottom border */
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0; /* Animation from left to right */
+  width: 100%;
+  height: 3px; /* Thickness of the border */
+  background: var(--accent-color-primary);
+  transform: scaleX(0);
+  transform-origin: left; /* Animation starts from the left */
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.category-header-card:hover::before {
+  transform: scaleX(1);
+}
+
+.category-header-card h2 {
+  color: var(--accent-color-primary); /* Fallback color */
+  background: linear-gradient(45deg, var(--accent-color-primary) 30%, var(--text-dark-primary) 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text; /* Standard property */
+  text-fill-color: transparent; /* Standard property */
+  /* Retain Tailwind classes for size, weight etc. from JSX */
+}
+
+/* Hide spinners from number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+}
