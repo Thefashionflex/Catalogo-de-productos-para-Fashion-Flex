@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { ProductItem, CartItem } from '../types';
+import { useCatalog } from './CatalogDataContext'; // Import useCatalog
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: ProductItem, quantity: number, selectedSize?: string, selectedVolume?: number, selectedPrice?: string) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
-  clearCart: () => void;
+  processOrderAndClearCart: () => void;
+  clearCart: () => void; // Added clearCart specifically for emptying
   getCartTotal: () => string;
   getTotalItems: () => number;
   isCartOpen: boolean;
@@ -20,7 +22,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const generateCartItemId = (productId: string, size?: string, volume?: number): string => {
   let id = productId;
   if (size) id += `_size_${size.replace(/\s+/g, '-')}`;
-  if (volume) id += `_vol_${volume}`; // Note: if volume can be 0 and that's distinct, this logic might need adjustment. Assume volume > 0.
+  if (volume) id += `_vol_${volume}`;
   return id;
 };
 
@@ -28,7 +30,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     try {
       const localData = localStorage.getItem('sportFlexCart');
-      console.log('CartContext: Initializing cart from localStorage:', localData); // DEBUG
       return localData ? JSON.parse(localData) : [];
     } catch (error) {
       console.error("Error loading cart from localStorage:", error);
@@ -36,10 +37,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { decrementStock, getProductById } = useCatalog(); 
 
   useEffect(() => {
     try {
-      console.log('CartContext: Saving cart to localStorage:', cartItems); // DEBUG
       localStorage.setItem('sportFlexCart', JSON.stringify(cartItems));
     } catch (error) {
       console.error("Error saving cart to localStorage:", error);
@@ -47,9 +48,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [cartItems]);
 
   const addToCart = useCallback((item: ProductItem, quantity: number, selectedSize?: string, selectedVolume?: number, selectedPrice?: string) => {
-    console.log('CartContext: addToCart called with item:', item.id, 'size:', selectedSize, 'volume:', selectedVolume, 'price:', selectedPrice, 'qty:', quantity); // DEBUG
+    
+    const productInCatalog = getProductById(item.id);
+    if (!productInCatalog || productInCatalog.stock < quantity) {
+        alert(`No hay suficiente stock para ${item.name}. Disponible: ${productInCatalog?.stock || 0}`);
+        return;
+    }
+
     setCartItems(prevItems => {
-      console.log('CartContext: addToCart - prevItems:', prevItems); // DEBUG
       const cartItemId = generateCartItemId(item.id, selectedSize, selectedVolume);
       const existingItemIndex = prevItems.findIndex(i => i.cartItemId === cartItemId);
 
@@ -57,13 +63,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (existingItemIndex > -1) {
         const updatedItems = [...prevItems];
         const currentItem = updatedItems[existingItemIndex];
+        const newQuantity = currentItem.quantity + quantity;
+
+        if (productInCatalog && productInCatalog.stock < newQuantity) {
+            alert(`No hay suficiente stock para ${item.name}. Disponible: ${productInCatalog.stock}, En carrito ya: ${currentItem.quantity}`);
+            return prevItems; 
+        }
+
         updatedItems[existingItemIndex] = {
           ...currentItem,
-          quantity: currentItem.quantity + quantity,
+          quantity: newQuantity,
           selectedPrice: selectedPrice || currentItem.selectedPrice,
         };
         newItems = updatedItems;
-        console.log('CartContext: Updating item', cartItemId, 'Resulting cart:', newItems); // DEBUG
       } else {
         const newItemToAdd = {
           ...item,
@@ -74,39 +86,47 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           selectedPrice: selectedPrice || item.price
         };
         newItems = [...prevItems, newItemToAdd];
-        console.log('CartContext: Adding new item', cartItemId, 'Resulting cart:', newItems); // DEBUG
       }
       return newItems;
     });
-  }, []);
+  }, [getProductById]);
 
   const removeFromCart = useCallback((cartItemId: string) => {
-    console.log('CartContext: removeFromCart called for cartItemId:', cartItemId); // DEBUG
-    setCartItems(prevItems => {
-      console.log('CartContext: removeFromCart - prevItems:', prevItems); // DEBUG
-      const newItems = prevItems.filter(item => item.cartItemId !== cartItemId);
-      console.log('CartContext: removeFromCart - resulting cart:', newItems); // DEBUG
-      return newItems;
-    });
+    setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));
   }, []);
 
   const updateQuantity = useCallback((cartItemId: string, quantity: number) => {
-    console.log('CartContext: updateQuantity called for cartItemId:', cartItemId, 'new quantity:', quantity); // DEBUG
     setCartItems(prevItems => {
-      console.log('CartContext: updateQuantity - prevItems:', prevItems); // DEBUG
-      const newItems = prevItems
-        .map(item =>
-          item.cartItemId === cartItemId ? { ...item, quantity: Math.max(0, quantity) } : item
-        )
-        .filter(item => item.quantity > 0);
-      console.log('CartContext: updateQuantity - resulting cart:', newItems); // DEBUG
-      return newItems;
+        const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
+        if (itemToUpdate) {
+            const productInCatalog = getProductById(itemToUpdate.id);
+            if (productInCatalog && productInCatalog.stock < quantity) {
+                alert(`No hay suficiente stock para ${itemToUpdate.name}. Máximo disponible: ${productInCatalog.stock}`);
+                 return prevItems.map(item =>
+                    item.cartItemId === cartItemId ? { ...item, quantity: Math.max(0, productInCatalog.stock) } : item
+                ).filter(item => item.quantity > 0);
+            }
+        }
+
+        return prevItems
+            .map(item =>
+            item.cartItemId === cartItemId ? { ...item, quantity: Math.max(0, quantity) } : item
+            )
+            .filter(item => item.quantity > 0);
     });
-  }, []);
+  }, [getProductById]);
+
+  const processOrderAndClearCart = useCallback(() => {
+    console.log('CartContext: processOrderAndClearCart called');
+    cartItems.forEach(item => {
+      console.log(`CartContext: Decrementing stock for ${item.name} (ID: ${item.id}), Qty: ${item.quantity}`);
+      decrementStock(item.id, item.quantity, item.selectedSize, item.selectedVolume);
+    });
+    setCartItems([]);
+  }, [cartItems, decrementStock]);
 
   const clearCart = useCallback(() => {
-    console.log('CartContext: clearCart called'); // DEBUG
-    setCartItems([]);
+    setCartItems([]); // Just clear items without stock decrement
   }, []);
 
   const getCartTotal = useCallback((): string => {
@@ -121,18 +141,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
-  const openCart = useCallback(() => {
-    console.log('CartContext: openCart called'); // DEBUG
-    setIsCartOpen(true);
-  }, []);
-  const closeCart = useCallback(() => {
-    console.log('CartContext: closeCart called'); // DEBUG
-    setIsCartOpen(false);
-  }, []);
-  const toggleCart = useCallback(() => {
-    console.log('CartContext: toggleCart called'); // DEBUG
-    setIsCartOpen(prev => !prev);
-  }, []);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
   return (
     <CartContext.Provider
@@ -141,7 +152,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToCart,
         removeFromCart,
         updateQuantity,
-        clearCart,
+        processOrderAndClearCart,
+        clearCart, // Added to provider
         getCartTotal,
         getTotalItems,
         isCartOpen,
@@ -162,4 +174,3 @@ export const useCart = (): CartContextType => {
   }
   return context;
 };
-

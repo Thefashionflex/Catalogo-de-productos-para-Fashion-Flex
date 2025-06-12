@@ -80,3 +80,14 @@ export interface Order {
   shippingAddress?: string; 
   paymentMethod?: string; 
 }
+
+// For CatalogDataContext
+export interface CatalogDataContextType {
+  catalog: CatalogCategory[];
+  getProductById: (productId: string) => ProductItem | undefined;
+  decrementStock: (productId: string, quantityToDecrement: number, selectedSize?: string, selectedVolume?: number) => void;
+  updateProduct: (updatedProduct: ProductItem) => void;
+  addProduct: (newProduct: ProductItem) => void;
+  deleteProductFromCatalog: (productId: string) => void;
+  getCategoryById: (categoryId: string) => CatalogCategory | undefined;
+}

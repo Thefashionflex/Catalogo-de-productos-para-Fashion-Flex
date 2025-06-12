@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -30,7 +31,7 @@ const OrderConfirmationPage: React.FC = () => {
         </Link>
       </div>
       <footer className={`text-[var(--text-dark-secondary)] py-8 text-center mt-12 z-10`}>
-          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} SPORT FLEX. GRACIAS POR TU PREFERENCIA.</p>
+          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} FASHION FLEX. GRACIAS POR TU PREFERENCIA.</p>
        </footer>
     </div>
   );

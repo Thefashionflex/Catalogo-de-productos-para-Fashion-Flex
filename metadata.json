@@ -1,6 +1,6 @@
 {
-  "name": "Sport Flex",
-  "description": "A product catalog application for Sport Flex. Built with React, TypeScript, and Tailwind CSS.",
+  "name": "Fashion Flex",
+  "description": "A product catalog application for Fashion Flex. Built with React, TypeScript, and Tailwind CSS.",
   "requestFramePermissions": [],
   "prompt": ""
 }

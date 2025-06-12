@@ -25,17 +25,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
   const initialFormState: Omit<ProductItem, 'id' | 'updatedAt' | 'imageUrl' | 'categoryName'> & { volumePrices?: ProductItem['volumePrices'], spinImages?: ProductImage[], sizePrices?: ProductItem['sizePrices'] } = {
     name: '',
     description: '',
-    images: [], 
-    spinImages: [], 
+    images: [],
+    spinImages: [],
     price: '',
     costPrice: 0,
     stock: 0,
     sku: '',
     categoryId: categories.length > 0 ? categories[0].id : '',
-    sizes: [], 
+    sizes: [],
     sizePrices: [],
     volumeMl: undefined,
-    availableVolumesMl: [], 
+    availableVolumesMl: [],
     volumePrices: [],
     // New fields defaults
     subcategoryId: '',
@@ -43,7 +43,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
     eanGtin: '',
     autoSku: false,
     productCondition: 'Nuevo',
-    unitType: 'Pieza', 
+    unitType: 'Pieza',
     brand: '',
     hasVariations: false,
     reservedStock: 0,
@@ -51,13 +51,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
   };
 
   const [formData, setFormData] = useState(initialFormState);
-  const [formImages, setFormImages] = useState<ProductImage[]>([]); 
-  const [formSpinImages, setFormSpinImages] = useState<ProductImage[]>([]); 
+  const [formImages, setFormImages] = useState<ProductImage[]>([]);
+  const [formSpinImages, setFormSpinImages] = useState<ProductImage[]>([]);
 
-  const [currentSizeCalzadoSelect, setCurrentSizeCalzadoSelect] = useState<string>('2'); 
+  const [currentSizeCalzadoSelect, setCurrentSizeCalzadoSelect] = useState<string>('2');
   const [currentSizeRopaSelect, setCurrentSizeRopaSelect] = useState<string>(predefinedRopaSizes[0]);
   const [productSizes, setProductSizes] = useState<string[]>([]);
-  
+
   const sizeCalzadoSelectRef = useRef<HTMLSelectElement>(null);
   const sizeRopaSelectRef = useRef<HTMLSelectElement>(null);
 
@@ -68,21 +68,27 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('general');
 
+  // NOTA SOBRE IMÁGENES LOCALES:
+  // Para la visualización inicial de productos con imágenes locales (ej. desde `public/images/`),
+  // las rutas deben especificarse directamente en `constants.ts` (INITIAL_CATALOG_DATA).
+  // Este formulario, al subir NUEVAS imágenes a través de la UI, las convertirá a base64
+  // y las guardará así en localStorage. Esto es diferente de referenciar archivos locales existentes.
+
   useEffect(() => {
     if (product) {
       const initialSizes = product.sizes || [];
       const initialSizePrices = product.sizePrices || [];
       const initialVolumeMl = product.volumeMl;
-      
+
       let currentUnitType = product.unitType;
       if (currentUnitType && !validUnitTypes.includes(currentUnitType)) {
-        currentUnitType = 'Pieza'; 
+        currentUnitType = 'Pieza';
       }
 
       setFormData({
         name: product.name || '',
         description: product.description || '',
-        images: product.images || [], 
+        images: product.images || [],
         spinImages: product.spinImages || [],
         price: product.price || '',
         costPrice: product.costPrice || 0,
@@ -108,7 +114,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
       setFormImages(product.images || []);
       setFormSpinImages(product.spinImages || []);
       setProductSizes(initialSizes);
-      
+
       if (product.categoryId === 'calzado') {
         setCurrentSizeCalzadoSelect( (initialSizes.length > 0 && initialSizes[0].endsWith(' MX') ? initialSizes[0].replace(' MX', '') : '2') );
       } else if (product.categoryId === 'ropa') {
@@ -125,14 +131,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
     } else {
        setFormData({
         ...initialFormState,
-        categoryId: categories.length > 0 ? categories[0].id : '', 
+        categoryId: categories.length > 0 ? categories[0].id : '',
         sizePrices: (initialFormState.categoryId === 'calzado' || initialFormState.categoryId === 'ropa') ? [] : undefined,
         availableVolumesMl: initialFormState.volumeMl ? [initialFormState.volumeMl] : [],
       });
       setFormImages([]);
       setFormSpinImages([]);
       setProductSizes([]);
-      setCurrentSizeCalzadoSelect('2'); 
+      setCurrentSizeCalzadoSelect('2');
       setCurrentSizeRopaSelect(predefinedRopaSizes[0]);
       if (predefinedPerfumeVolumes.length > 0) {
         setCurrentVolumeSelect(predefinedPerfumeVolumes[0].toString());
@@ -144,7 +150,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     let processedValue: string | number | boolean | undefined = value;
-  
+
     if (type === 'checkbox') {
       processedValue = (e.target as HTMLInputElement).checked;
     } else if (['costPrice', 'stock', 'reservedStock', 'lowStockNotificationThreshold'].includes(name)) {
@@ -152,11 +158,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         if (isNaN(processedValue as number)) {
           processedValue = 0;
         }
-    } else if (name === 'volumeMl') { 
+    } else if (name === 'volumeMl') {
         const numValue = parseFloat(value);
         processedValue = isNaN(numValue) || numValue <= 0 ? undefined : numValue;
     }
-    
+
     if (name === 'categoryId') {
         setFormData(prev => ({
             ...prev,
@@ -167,7 +173,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
             availableVolumesMl: value === 'perfumes' ? [(prev.volumeMl || (predefinedPerfumeVolumes.length > 0 ? predefinedPerfumeVolumes[0] : undefined)) as number].filter(Boolean) as number[] : [],
             volumePrices: value === 'perfumes' ? (prev.volumeMl && prev.price ? [{volume: prev.volumeMl, price: prev.price}] : []) : [],
         }));
-         setCurrentSizeCalzadoSelect('2'); 
+         setCurrentSizeCalzadoSelect('2');
          setCurrentSizeRopaSelect(predefinedRopaSizes[0]);
          if (value === 'perfumes' && predefinedPerfumeVolumes.length > 0) {
            const defaultVolume = predefinedPerfumeVolumes[0];
@@ -182,7 +188,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
             ...prev,
             volumeMl: selectedVol,
             availableVolumesMl: selectedVol > 0 ? [selectedVol] : [],
-            volumePrices: selectedVol > 0 && prev.price ? [{volume: selectedVol, price: prev.price}] : [] 
+            volumePrices: selectedVol > 0 && prev.price ? [{volume: selectedVol, price: prev.price}] : []
         }));
     } else {
          setFormData(prev => ({
@@ -200,8 +206,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         reader.onloadend = () => {
           const newImage: ProductImage = {
             id: generateImageId(),
-            url: reader.result as string,
-            isMain: imageType === 'gallery' ? (formImages.length === 0 && (!product || !product.images || product.images.length ===0)) : false, 
+            url: reader.result as string, // Esto será base64
+            isMain: imageType === 'gallery' ? (formImages.length === 0 && (!product || !product.images || product.images.length ===0)) : false,
           };
           if (imageType === 'gallery') {
             setFormImages(prevImgs => [...prevImgs, newImage]);
@@ -211,7 +217,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         };
         reader.readAsDataURL(file);
       });
-      e.target.value = ''; 
+      e.target.value = '';
     }
   };
 
@@ -244,13 +250,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         }
         newSize = `${currentSizeCalzadoSelect} MX`;
     } else if (formData.categoryId === 'ropa') {
-        newSize = currentSizeRopaSelect; 
+        newSize = currentSizeRopaSelect;
         if (!newSize) {
             alert("POR FAVOR, SELECCIONA UNA TALLA DE ROPA DE LA LISTA.");
             return;
         }
     } else {
-        return; 
+        return;
     }
 
     if (newSize && !productSizes.includes(newSize)) {
@@ -263,7 +269,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
       });
       setProductSizes(updatedSizes);
       setFormData(prev => ({ ...prev, sizes: updatedSizes }));
-      if(formData.categoryId === 'calzado') setCurrentSizeCalzadoSelect('2'); 
+      if(formData.categoryId === 'calzado') setCurrentSizeCalzadoSelect('2');
       else if(formData.categoryId === 'ropa') setCurrentSizeRopaSelect(predefinedRopaSizes[0]);
     } else if (productSizes.includes(newSize)){
         alert("ESTA TALLA YA HA SIDO AÑADIDA.");
@@ -316,29 +322,29 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
         alert("PARA 'PERFUMES', SELECCIONA UN VOLUMEN ML VÁLIDO.");
         return;
     }
-    
+
     const finalSizePrices = (formData.categoryId === 'calzado' || formData.categoryId === 'ropa')
         ? (formData.sizePrices || []).filter(sp => sp.price.trim() !== '' && parseFloat(sp.price.replace('$', '')) > 0)
         : undefined;
 
     const productToSave: ProductItem = {
       ...formData,
-      id: product ? product.id : generateImageId(), 
-      images: formImages, 
-      spinImages: formSpinImages, 
+      id: product ? product.id : generateImageId(),
+      images: formImages,
+      spinImages: formSpinImages,
       sizes: (formData.categoryId === 'calzado' || formData.categoryId === 'ropa') ? productSizes : [],
       sizePrices: finalSizePrices,
       volumeMl: formData.categoryId === 'perfumes' ? formData.volumeMl : undefined,
       availableVolumesMl: formData.categoryId === 'perfumes' && formData.volumeMl ? [formData.volumeMl] : undefined,
       volumePrices: formData.categoryId === 'perfumes' && formData.volumeMl && formData.price ? [{volume: formData.volumeMl, price: formData.price}] : undefined,
-    } as ProductItem; 
+    } as ProductItem;
     onSave(productToSave);
   };
-  
+
   const profitMargin = useMemo(() => {
     const priceNum = parseFloat(formData.price.replace('$', '').replace(',', ''));
     const costNum = formData.costPrice;
-    if (!isNaN(priceNum) && priceNum > 0 && !isNaN(costNum)) { 
+    if (!isNaN(priceNum) && priceNum > 0 && !isNaN(costNum)) {
       return (((priceNum - costNum) / priceNum) * 100).toFixed(2);
     }
     return 'N/A';
@@ -462,11 +468,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
                   Tallas Disponibles (MX)
                 </label>
                 <div className="flex items-center gap-2">
-                     <select 
-                          ref={sizeCalzadoSelectRef} 
+                     <select
+                          ref={sizeCalzadoSelectRef}
                           id="calzadoSizes"
-                          value={currentSizeCalzadoSelect} 
-                          onChange={(e) => setCurrentSizeCalzadoSelect(e.target.value)} 
+                          value={currentSizeCalzadoSelect}
+                          onChange={(e) => setCurrentSizeCalzadoSelect(e.target.value)}
                           className={`${selectClass} flex-grow`}
                       >
                           <option value="">Selecciona talla...</option>
@@ -494,11 +500,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
                     Tallas Disponibles (XCH, CH, M, G, XG)
                 </label>
                 <div className="flex items-center gap-2">
-                     <select 
-                          ref={sizeRopaSelectRef} 
+                     <select
+                          ref={sizeRopaSelectRef}
                           id="ropaSizes"
-                          value={currentSizeRopaSelect} 
-                          onChange={(e) => setCurrentSizeRopaSelect(e.target.value)} 
+                          value={currentSizeRopaSelect}
+                          onChange={(e) => setCurrentSizeRopaSelect(e.target.value)}
                           className={`${selectClass} flex-grow`}
                       >
                           {predefinedRopaSizes.map(size => (
@@ -519,15 +525,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
                 )}
               </div>
             )}
-          
+
             {formData.categoryId === 'perfumes' && (
               <div className={formFieldWrapperClass}>
                 <label htmlFor="volumeMl" className={`${labelClass} mb-2`}>VOLÚMEN ML</label>
-                 <select 
+                 <select
                       name="volumeMl"
                       id="volumeMl"
-                      ref={volumeSelectRef} 
-                      value={formData.volumeMl || ''} 
+                      ref={volumeSelectRef}
+                      value={formData.volumeMl || ''}
                       onChange={handleChange}
                       className={`${selectClass} flex-grow`}
                   >
@@ -608,7 +614,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
                     </p>
                 </div>
             </div>
-            
+
             {(formData.categoryId === 'calzado' || formData.categoryId === 'ropa') && formData.sizes && formData.sizes.length > 0 && (
               <div className="mt-6 border-t border-gray-200/80 pt-4">
                 <h4 className={`${labelClass} text-base mb-2`}>PRECIOS POR TALLA (OPCIONAL)</h4>
@@ -660,7 +666,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
   );
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50"> 
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
       <div className={`bg-[var(--light-bg-alt)] rounded-lg shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col border border-[${ACCENT_COLOR}]/50`}>
         <header className={`px-6 py-4 border-b border-[${ACCENT_COLOR}]/30`}>
             <h2 className={`text-xl font-semibold text-[${ACCENT_COLOR}] tracking-wide uppercase`}>
@@ -668,7 +674,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
             {product && <span className="text-sm text-[var(--text-dark-secondary)] normal-case ml-2">- {product.name}</span>}
             </h2>
         </header>
-        
+
         <div className="flex flex-grow overflow-hidden">
             <aside className="w-1/4 sm:w-1/5 bg-[var(--light-bg)]/30 border-r border-gray-200/80 p-4 space-y-2 overflow-y-auto scrollbar-thin">
                 <TabButton tabId="general" label="Información General" currentTab={activeTab} onClick={setActiveTab} />
@@ -683,7 +689,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, 
                 </div>
             </form>
         </div>
-        
+
         <footer className={`px-6 py-4 border-t border-[${ACCENT_COLOR}]/30 flex justify-end space-x-3 bg-[var(--light-bg)]/30 rounded-b-lg`}>
             <button type="button" onClick={onCancel}
                     className={`py-2 px-4 border border-gray-300/90 rounded-md shadow-sm text-sm font-medium text-[var(--text-dark-secondary)]

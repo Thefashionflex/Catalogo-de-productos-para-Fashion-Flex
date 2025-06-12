@@ -63,9 +63,9 @@ const LoginPage: React.FC = () => {
       <div className="relative z-10 text-center mb-12">
         <h1
           className={`text-7xl md:text-8xl font-['Anton'] uppercase tracking-[0.1em] md:tracking-[0.15em] text-[${ACCENT_COLOR}] select-none`}
-          aria-label="Sport Flex Admin Login"
+          aria-label="Fashion Flex Inicio de Sesión Administrativo"
         >
-          SPORT FLEX
+          FASHION FLEX
         </h1>
         <p className={`text-lg text-[var(--text-dark-secondary)] tracking-wider uppercase`}>Panel de Administración</p>
       </div>
@@ -138,7 +138,7 @@ const LoginPage: React.FC = () => {
         </form>
       </div>
        <footer className={`text-[var(--text-dark-secondary)] py-8 text-center mt-12 z-10`}>
-          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} SPORT FLEX ADMINISTRACIÓN.</p>
+          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} FASHION FLEX ADMINISTRACIÓN.</p>
        </footer>
     </div>
   );

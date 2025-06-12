@@ -97,10 +97,6 @@
   font-weight: 700; 
 }
 
-.category-nav-link.active::after { 
-  content: none;
-}
-
 .category-nav-link::before {
   content: '';
   position: absolute;
@@ -115,7 +111,7 @@
   pointer-events: none; 
 }
 
-.category-nav-link:hover::before {
+.category-nav-link:hover::before { 
   transform: scaleX(1) translateX(-50%); 
 }
 

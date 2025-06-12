@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom';
 import { Order, OrderItemDetails, OrderStatus } from '../types';
 import { ProductItem } from '../types'; // Assuming ProductItem is needed for product details
-import { CATALOG_DATA } from '../constants'; // To get some product images for mock data
+import { INITIAL_CATALOG_DATA } from '../constants'; // Changed to INITIAL_CATALOG_DATA
 import ChangeOrderStatusModal from './ChangeOrderStatusModal'; // Import the new modal
 
 
@@ -11,7 +11,7 @@ const ACCENT_COLOR = 'var(--accent-color-primary)';
 
 // Helper to get a random product image for mock data
 const getRandomProductImage = (): string => {
-    const allItems = CATALOG_DATA.flatMap(cat => cat.items);
+    const allItems = INITIAL_CATALOG_DATA.flatMap(cat => cat.items); // Changed to INITIAL_CATALOG_DATA
     if (allItems.length === 0) return 'https://picsum.photos/seed/defaultproduct/100/100';
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
     return randomItem.imageUrl;
@@ -376,7 +376,7 @@ const OrderManagementPage: React.FC = () => {
 
       <footer className={`bg-[var(--light-bg-alt)]/70 border-t border-[${ACCENT_COLOR}]/30 text-[var(--text-dark-secondary)] py-6 text-center mt-auto`}>
         <div className="container mx-auto px-6">
-          <p className="tracking-wider text-xs uppercase">&copy; {new Date().getFullYear()} SPORT FLEX. GESTIÓN DE PEDIDOS.</p>
+          <p className="tracking-wider text-xs uppercase">&copy; {new Date().getFullYear()} FASHION FLEX. GESTIÓN DE PEDIDOS.</p>
         </div>
       </footer>
     </div>

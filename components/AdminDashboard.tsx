@@ -46,7 +46,7 @@ const AdminDashboard: React.FC = () => {
       <header className={`bg-[var(--light-bg-alt)]/80 backdrop-blur-lg py-6 shadow-lg border-b border-[${ACCENT_COLOR}]/30 sticky top-0 z-40`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
           <h1 className={`text-2xl font-['Anton'] tracking-wider text-[${ACCENT_COLOR}] uppercase`}>
-            SPORT FLEX - ADMIN
+            FASHION FLEX - ADMIN
           </h1>
           <button
             onClick={handleLogout}
@@ -109,7 +109,7 @@ const AdminDashboard: React.FC = () => {
 
       <footer className={`bg-[var(--light-bg-alt)]/70 border-t border-[${ACCENT_COLOR}]/30 text-[var(--text-dark-secondary)] py-8 text-center`}>
         <div className="container mx-auto px-6">
-          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} SPORT FLEX. PANEL DE ADMINISTRACIÓN.</p>
+          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} FASHION FLEX. PANEL DE ADMINISTRACIÓN.</p>
         </div>
       </footer>
     </div>

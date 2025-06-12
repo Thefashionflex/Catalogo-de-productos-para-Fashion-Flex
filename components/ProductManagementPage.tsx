@@ -1,17 +1,16 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { ProductItem, CatalogCategory, ProductImage } from '../types';
-import { CATALOG_DATA } from '../constants';
-import ProductForm from './ProductForm'; // Crearemos este componente
+// import { CATALOG_DATA } from '../constants'; // Replaced by useCatalog
+import { useCatalog } from '../contexts/CatalogDataContext'; // Import useCatalog
+import ProductForm from './ProductForm';
 import { Link } from 'react-router-dom';
 
 const ACCENT_COLOR = 'var(--accent-color-primary)';
 const LOW_STOCK_THRESHOLD = 5;
 
-// Función para generar IDs únicos simples (para demostración)
-const generateId = () => `prod_${Math.random().toString(36).substr(2, 9)}`;
+// const generateId = () => `prod_${Math.random().toString(36).substr(2, 9)}`; // Will use ID from form or let context handle it
 
-// SVG Icons for stats - simplified
 const IconWarning = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-yellow-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>;
 const IconNoPhoto = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18 10.5h.008v.008H18V10.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" /></svg>;
 const IconTrendingUp = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-500"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>;
@@ -19,27 +18,18 @@ const IconNoGood = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" vie
 const IconNoPrice = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" /></svg>;
 const IconTrendingDown = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-orange-500"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" /></svg>;
 
-
 const ProductManagementPage: React.FC = () => {
-  const initialProducts = useMemo(() => {
-    return CATALOG_DATA.flatMap(category =>
+  const { catalog, updateProduct, addProduct, deleteProductFromCatalog, getCategoryById } = useCatalog();
+  
+  const allProductsFromCatalog = useMemo(() => {
+    return catalog.flatMap(category =>
       category.items.map(item => ({
         ...item,
-        categoryId: category.id,
-        categoryName: category.name,
-        images: item.images && item.images.length > 0 ? item.images : [{ id: `img_${item.id}_main`, url: item.imageUrl, isMain: true }],
-        imageUrl: item.images && item.images.length > 0 ? item.images.find(img => img.isMain)?.url || item.imageUrl : item.imageUrl,
-        sizes: item.sizes || [], 
-        volumeMl: item.volumeMl,
-        availableVolumesMl: item.availableVolumesMl || (item.volumeMl ? [item.volumeMl] : []),
-        volumePrices: item.volumePrices || (item.volumeMl ? [{volume: item.volumeMl, price: item.price}] : []),
-        spinImages: item.spinImages || [], 
+        categoryName: category.name, // Ensure categoryName is fresh
       }))
     );
-  }, []);
+  }, [catalog]);
 
-  const [products, setProducts] = useState<ProductItem[]>(initialProducts);
-  const [categories] = useState<CatalogCategory[]>(CATALOG_DATA);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,17 +50,17 @@ const ProductManagementPage: React.FC = () => {
   }, []);
 
   const productStats = useMemo(() => {
-    const totalProducts = products.length;
-    const lowStock = products.filter(p => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD).length;
-    const noPhoto = products.filter(p => p.imageUrl.includes('picsum.photos') || (p.images && p.images.every(img => img.url.includes('picsum.photos')))).length;
-    const soldOut = products.filter(p => p.stock === 0).length;
-    const noPrice = products.filter(p => !p.price || p.price === '$0.00').length;
+    const totalProducts = allProductsFromCatalog.length;
+    const lowStock = allProductsFromCatalog.filter(p => p.stock > 0 && p.stock <= (p.lowStockNotificationThreshold || LOW_STOCK_THRESHOLD)).length;
+    const noPhoto = allProductsFromCatalog.filter(p => p.imageUrl.includes('picsum.photos') || (p.images && p.images.every(img => img.url.includes('picsum.photos')))).length;
+    const soldOut = allProductsFromCatalog.filter(p => p.stock === 0).length;
+    const noPrice = allProductsFromCatalog.filter(p => !p.price || p.price === '$0.00' || parseFloat(p.price.replace('$', '')) === 0).length;
     // Sales data not available, so placeholders
     const withSales = 0; 
     const noSales = totalProducts;
 
     return { totalProducts, lowStock, noPhoto, soldOut, noPrice, withSales, noSales };
-  }, [products]);
+  }, [allProductsFromCatalog]);
 
 
   const handleAddNewProduct = () => {
@@ -85,33 +75,33 @@ const ProductManagementPage: React.FC = () => {
 
   const handleDeleteProduct = (productId: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
+      deleteProductFromCatalog(productId);
     }
   };
 
   const handleSaveProduct = (productToSave: ProductItem) => {
     const mainImage = productToSave.images.find(img => img.isMain);
+    const categoryOfProduct = getCategoryById(productToSave.categoryId);
+
     const productWithFullData: ProductItem = {
       ...productToSave,
       imageUrl: mainImage ? mainImage.url : productToSave.images.length > 0 ? productToSave.images[0].url : 'https://picsum.photos/seed/default/300/200',
-      categoryName: categories.find(c => c.id === productToSave.categoryId)?.name || 'Sin Categoría',
+      categoryName: categoryOfProduct?.name || 'Sin Categoría',
       updatedAt: new Date().toISOString(),
       availableVolumesMl: productToSave.categoryId === 'perfumes' 
         ? (productToSave.availableVolumesMl && productToSave.availableVolumesMl.length > 0 ? productToSave.availableVolumesMl : (productToSave.volumeMl ? [productToSave.volumeMl] : []))
         : undefined,
       volumePrices: productToSave.categoryId === 'perfumes'
-        ? (productToSave.volumePrices && productToSave.volumePrices.length > 0 ? productToSave.volumePrices : (productToSave.volumeMl ? [{volume: productToSave.volumeMl, price: productToSave.price}] : []))
+        ? (productToSave.volumePrices && productToSave.volumePrices.length > 0 ? productToSave.volumePrices : (productToSave.volumeMl && productToSave.price ? [{volume: productToSave.volumeMl, price: productToSave.price}] : []))
         : undefined,
       spinImages: productToSave.spinImages || [], 
     };
-
-    setProducts(prevProducts => {
-      if (editingProduct) {
-        return prevProducts.map(p => (p.id === productWithFullData.id ? productWithFullData : p));
-      } else {
-        return [{ ...productWithFullData, id: generateId() }, ...prevProducts];
-      }
-    });
+    
+    if (editingProduct) {
+      updateProduct(productWithFullData);
+    } else {
+      addProduct({ ...productWithFullData, id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 5)}` }); // Ensure new ID
+    }
     setIsFormOpen(false);
     setEditingProduct(null);
   };
@@ -122,13 +112,13 @@ const ProductManagementPage: React.FC = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products;
-    return products.filter(p =>
+    if (!searchTerm) return allProductsFromCatalog;
+    return allProductsFromCatalog.filter(p =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.categoryName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [products, searchTerm]);
+  }, [allProductsFromCatalog, searchTerm]);
 
 
   return (
@@ -158,15 +148,11 @@ const ProductManagementPage: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8 flex-grow">
-        {/* Statistics Cards Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Main Card: Total Productos */}
           <div className="lg:col-span-1 bg-[var(--light-bg-alt)]/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-200/80 flex flex-col justify-center items-center text-center">
             <p className={`text-6xl font-bold text-[${ACCENT_COLOR}]`}>{productStats.totalProducts}</p>
             <p className="text-sm font-medium text-[var(--text-dark-secondary)] uppercase mt-1">Productos</p>
           </div>
-
-          {/* Smaller Stat Cards Wrapper */}
           <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { title: 'Existencias mínimas', value: productStats.lowStock, icon: <IconWarning /> },
@@ -223,7 +209,7 @@ const ProductManagementPage: React.FC = () => {
                     <td className="py-3 px-4 text-[var(--text-dark-secondary)]">{product.sku}</td>
                     <td className="py-3 px-4 text-[var(--text-dark-secondary)] uppercase">{product.categoryName?.toUpperCase()}</td>
                     <td className="py-3 px-4 text-[var(--text-dark-secondary)] text-right">{product.price}</td>
-                    <td className="py-3 px-4 text-[var(--text-dark-secondary)] text-right">{product.stock}</td>
+                    <td className={`py-3 px-4 text-right ${product.stock <= (product.lowStockNotificationThreshold || LOW_STOCK_THRESHOLD) ? (product.stock === 0 ? 'text-red-600 font-bold' : 'text-orange-600 font-semibold') : 'text-[var(--text-dark-secondary)]'}`}>{product.stock}</td>
                     <td className="py-3 px-4 text-[var(--text-dark-secondary)] text-xs uppercase">
                       {product.categoryId === 'perfumes' && product.availableVolumesMl && product.availableVolumesMl.length > 0 
                         ? `Vol: ${product.availableVolumesMl.join('ml, ')}ml` 
@@ -263,7 +249,7 @@ const ProductManagementPage: React.FC = () => {
       {isFormOpen && (
         <ProductForm
           product={editingProduct}
-          categories={categories}
+          categories={catalog} // Pass the live catalog categories
           onSave={handleSaveProduct}
           onCancel={handleCancelForm}
         />
@@ -271,7 +257,7 @@ const ProductManagementPage: React.FC = () => {
 
       <footer className={`bg-[var(--light-bg-alt)]/70 border-t border-[${ACCENT_COLOR}]/30 text-[var(--text-dark-secondary)] py-6 text-center mt-auto`}>
         <div className="container mx-auto px-6">
-          <p className="tracking-wider text-xs uppercase">&copy; {new Date().getFullYear()} SPORT FLEX. GESTIÓN DE PRODUCTOS.</p>
+          <p className="tracking-wider text-xs uppercase">&copy; {new Date().getFullYear()} FASHION FLEX. GESTIÓN DE PRODUCTOS.</p>
         </div>
       </footer>
     </div>

@@ -10,7 +10,7 @@ const CartSidebar: React.FC = () => {
     cartItems,
     removeFromCart,
     updateQuantity,
-    clearCart,
+    clearCart, // Updated to use clearCart for emptying the cart
     getCartTotal,
     isCartOpen,
     closeCart,
@@ -27,6 +27,10 @@ const CartSidebar: React.FC = () => {
 
   const handleProceedToCheckout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
+    if (cartItems.length === 0) {
+        alert("Tu carrito está vacío. Añade productos antes de proceder al pago.");
+        return;
+    }
     navigate('/checkout');
     closeCart();
   };
@@ -126,14 +130,14 @@ const CartSidebar: React.FC = () => {
               <span className={`text-xl font-bold text-[${ACCENT_COLOR}]`}>{getCartTotal()}</span>
             </div>
             <button
-              onClick={handleProceedToCheckout} // Actualizado para usar la nueva función
+              onClick={handleProceedToCheckout}
               className={`w-full bg-[${ACCENT_COLOR}] hover:bg-opacity-90 text-white font-bold py-3 px-4 rounded-md
                          transition-colors duration-300 tracking-wider text-sm uppercase`}
             >
               Proceder al Pago
             </button>
             <button
-              onClick={clearCart}
+              onClick={clearCart} // Uses the new clearCart function
               className={`w-full bg-transparent hover:bg-gray-200 text-[var(--text-dark-secondary)]
                          border border-gray-300 font-medium py-2.5 px-4 rounded-md
                          transition-colors duration-300 text-sm tracking-wider uppercase`}

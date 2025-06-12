@@ -1,29 +1,46 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
 
 const ACCENT_COLOR = 'var(--accent-color-primary)';
 
 const CheckoutPage: React.FC = () => {
-  const { cartItems, getCartTotal, clearCart } = useCart();
+  const { cartItems, getCartTotal, processOrderAndClearCart } = useCart(); // Updated to use processOrderAndClearCart
   const navigate = useNavigate();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
-    if (cartItems.length === 0) {
-      // Si el carrito está vacío, redirigir al catálogo
+    if (cartItems.length === 0 && !isProcessingPayment) {
       navigate('/');
     }
-  }, [cartItems, navigate]);
+  }, [cartItems, navigate, isProcessingPayment]);
 
-  const handleConfirmOrder = () => {
-    // Aquí, en una aplicación real, se procesaría el pago.
-    // Para esta simulación, limpiamos el carrito y navegamos a la página de confirmación.
-    clearCart();
-    navigate('/order-confirmation');
+  const handleMercadoPagoPayment = async () => {
+    setIsProcessingPayment(true);
+    console.log("Simulating: User clicks 'Pagar con Mercado Pago'.");
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
+    console.log("Simulating: Mercado Pago SDK collects payment information and returns a payment token/ID.");
+    const mockPaymentToken = `mock_mp_token_${Date.now()}`;
+    console.log(`Simulating: Received mock payment token: ${mockPaymentToken}`);
+    console.log("Simulating: Sending payment token to backend endpoint...");
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000)); 
+      console.log("Simulating: Backend successfully processed payment with Mercado Pago.");
+      
+      processOrderAndClearCart(); // Call the updated function
+      navigate('/order-confirmation');
+
+    } catch (error) {
+      console.error("Simulating: Error during payment processing:", error);
+      alert("Hubo un error al procesar tu pago. Por favor, inténtalo de nuevo.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
-  if (cartItems.length === 0) {
-    // Aunque useEffect redirige, esto previene renderizado momentáneo de la página vacía.
+  if (cartItems.length === 0 && !isProcessingPayment) {
     return null;
   }
 
@@ -76,27 +93,40 @@ const CheckoutPage: React.FC = () => {
               <span className={`text-[${ACCENT_COLOR}]`}>{getCartTotal()}</span>
             </div>
 
-            {/* Placeholder para formularios de envío y pago */}
             <div className="my-6 p-4 bg-[var(--light-bg)]/50 border border-dashed border-gray-300 rounded-md">
-              <h3 className="text-md font-semibold text-[var(--text-dark-secondary)] mb-2 uppercase">Información de Envío y Pago</h3>
+              <h3 className="text-md font-semibold text-[var(--text-dark-secondary)] mb-2 uppercase">Método de Pago</h3>
               <p className="text-sm text-gray-500">
-                En una aplicación completa, aquí irían los formularios para ingresar la dirección de envío y los detalles de pago.
+                Serás dirigido a Mercado Pago para completar tu pago de forma segura.
+                En una aplicación real, aquí podrías integrar Mercado Pago Checkout Bricks para un formulario de pago incrustado o un botón que redirija a Checkout Pro.
               </p>
+              <p className="text-sm text-blue-600 mt-2 font-medium">Nota: Al confirmar, el inventario se descontará localmente (simulación).</p>
             </div>
 
             <button
-              onClick={handleConfirmOrder}
-              className={`w-full bg-[${ACCENT_COLOR}] hover:bg-opacity-90 text-white font-bold py-3.5 px-4 rounded-md
+              onClick={handleMercadoPagoPayment}
+              disabled={isProcessingPayment || cartItems.length === 0}
+              className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-md
                          transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] tracking-wider text-base uppercase
-                         focus:outline-none focus:ring-2 focus:ring-[${ACCENT_COLOR}]/70 focus:ring-offset-2 focus:ring-offset-[var(--light-bg-alt)]`}
+                         focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-[var(--light-bg-alt)]
+                         disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center`}
             >
-              Confirmar Pedido y Pagar (Simulado)
+              {isProcessingPayment ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Procesando...
+                </>
+              ) : (
+                'PAGAR CON MERCADO PAGO'
+              )}
             </button>
             <Link 
                 to="/" 
                 className={`block w-full text-center mt-4 bg-transparent hover:bg-gray-200/70 text-[var(--text-dark-secondary)]
                             border border-gray-300/90 font-medium py-3 px-4 rounded-md
-                            transition-colors duration-300 text-sm tracking-wider uppercase`}
+                            transition-colors duration-300 text-sm tracking-wider uppercase ${isProcessingPayment ? 'opacity-50 pointer-events-none' : ''}`}
             >
                 Seguir Comprando
             </Link>
@@ -106,7 +136,7 @@ const CheckoutPage: React.FC = () => {
       
       <footer className={`bg-[var(--light-bg-alt)]/70 border-t border-[${ACCENT_COLOR}]/30 text-[var(--text-dark-secondary)] py-8 text-center mt-12`}>
         <div className="container mx-auto px-6">
-          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} SPORT FLEX. PROCESO DE COMPRA SEGURO.</p>
+          <p className="tracking-wider text-sm uppercase">&copy; {new Date().getFullYear()} FASHION FLEX. PROCESO DE COMPRA SEGURO.</p>
         </div>
       </footer>
     </div>

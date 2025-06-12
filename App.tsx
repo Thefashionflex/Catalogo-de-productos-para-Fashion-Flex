@@ -10,6 +10,7 @@ import CheckoutPage from './components/CheckoutPage';
 import OrderConfirmationPage from './components/OrderConfirmationPage'; 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { CatalogProvider } from './contexts/CatalogDataContext'; // Import CatalogProvider
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -24,22 +25,24 @@ const ProtectedRoute: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <CartProvider>
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<CatalogPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} /> 
-            <Route path="/order-confirmation" element={<OrderConfirmationPage />} /> 
-            <Route element={<ProtectedRoute />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<ProductManagementPage />} />
-              <Route path="/admin/orders" element={<OrderManagementPage />} /> {/* Nueva ruta para pedidos */}
-            </Route>
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </HashRouter>
-      </CartProvider>
+      <CatalogProvider> {/* Wrap with CatalogProvider */}
+        <CartProvider>
+          <HashRouter>
+            <Routes>
+              <Route path="/" element={<CatalogPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} /> 
+              <Route path="/order-confirmation" element={<OrderConfirmationPage />} /> 
+              <Route element={<ProtectedRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/products" element={<ProductManagementPage />} />
+                <Route path="/admin/orders" element={<OrderManagementPage />} /> {/* Nueva ruta para pedidos */}
+              </Route>
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </HashRouter>
+        </CartProvider>
+      </CatalogProvider>
     </AuthProvider>
   );
 };

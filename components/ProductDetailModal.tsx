@@ -2,26 +2,31 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ProductItem, ProductImage } from '../types';
 import { useCart } from '../contexts/CartContext'; 
+import { useCatalog } from '../contexts/CatalogDataContext'; // Import useCatalog
 
 const ACCENT_COLOR = 'var(--accent-color-primary)';
 
 interface ProductDetailModalProps {
-  product: ProductItem;
+  product: ProductItem; // Initial product data (might be slightly stale)
   onClose: () => void;
 }
 
-const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClose }) => {
+const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product: initialProduct, onClose }) => {
   const { addToCart, openCart } = useCart();
+  const { getProductById } = useCatalog(); // Get live product data
+  
+  // Use live product data from context, fallback to initialProduct if not found (should always be found)
+  const product = getProductById(initialProduct.id) || initialProduct;
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const modalContentRef = useRef<HTMLDivElement>(null);
 
   const galleryImages = product.images || [];
   const mainImage = galleryImages.find(img => img.isMain) || galleryImages[0];
 
-  // State for selected variants
   const [selectedSizeInModal, setSelectedSizeInModal] = useState<string | undefined>(() => {
     if ((product.categoryId === 'calzado' || product.categoryId === 'ropa') && product.sizes && product.sizes.length > 0) {
-      return product.sizes[0]; // Pre-select first size
+      return product.sizes[0];
     }
     return undefined;
   });
@@ -41,19 +46,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
   }, [product, galleryImages, mainImage]);
 
   useEffect(() => {
-    // Update display price based on product and selected volume
     let newPrice = product.price;
     if (product.categoryId === 'perfumes' && selectedVolumeInModal) {
         const volumePriceEntry = product.volumePrices?.find(vp => vp.volume === selectedVolumeInModal);
         if (volumePriceEntry) {
             newPrice = volumePriceEntry.price;
-        } else if (product.volumeMl === selectedVolumeInModal) { // Fallback to base price if selectedVolume is the main volumeMl
+        } else if (product.volumeMl === selectedVolumeInModal) {
             newPrice = product.price;
         }
     }
     setDisplayPrice(newPrice);
   }, [product, selectedVolumeInModal]);
-
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape') {
@@ -76,13 +79,17 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
   }, [handleKeyDown]);
   
   const handleAddToCartClick = () => {
-    // Price to add will be the current displayPrice, which reflects volume selection
+    if (product.stock <= 0) {
+        alert(`${product.name} está agotado.`);
+        return;
+    }
     addToCart(product, 1, selectedSizeInModal, selectedVolumeInModal, displayPrice);
     openCart();
     onClose(); 
   };
 
   const isAddToCartDisabled = () => {
+    if (product.stock <= 0) return true;
     if (product.categoryId === 'calzado' && product.sizes && product.sizes.length > 0 && !selectedSizeInModal) {
       return true;
     }
@@ -95,8 +102,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
     return false;
   };
 
-
   if (!product) return null;
+  const isOutOfStock = product.stock <= 0;
 
   return (
     <div 
@@ -109,7 +116,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
       <div 
         ref={modalContentRef}
         tabIndex={-1} 
-        className="bg-[var(--light-bg-alt)] p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col sm:flex-row gap-6 relative overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--accent-color-primary)] scrollbar-track-gray-100"
+        className={`bg-[var(--light-bg-alt)] p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col sm:flex-row gap-6 relative overflow-y-auto scrollbar-thin scrollbar-thumb-[var(--accent-color-primary)] scrollbar-track-gray-100 ${isOutOfStock ? 'opacity-90' : ''}`}
         onClick={(e) => e.stopPropagation()} 
       >
         <button
@@ -138,6 +145,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                     className="w-full h-full object-contain"
                 />
             )}
+            {isOutOfStock && (
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600/90 text-white text-sm font-bold uppercase px-4 py-2 rounded-lg backdrop-blur-sm shadow-lg">
+                    AGOTADO
+                </span>
+            )}
           </div>
           {galleryImages.length > 1 && (
             <div className="flex flex-wrap justify-center gap-2 max-h-28 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-1">
@@ -148,6 +160,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                   className={`w-14 h-14 rounded border-2 p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[${ACCENT_COLOR}]/70
                               ${index === currentImageIndex ? `border-[${ACCENT_COLOR}]` : 'border-gray-300 hover:border-gray-400'}`}
                   aria-label={`Ver imagen ${index + 1} de ${product.name}`}
+                  disabled={isOutOfStock}
                 >
                   <img src={img.url} alt={`Miniatura ${index + 1}`} className="w-full h-full object-cover rounded-sm" />
                 </button>
@@ -157,9 +170,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
         </div>
 
         <div className="w-full sm:w-1/2 flex flex-col">
-          <h2 id="product-detail-title" className={`text-2xl lg:text-3xl font-bold text-[${ACCENT_COLOR}] mb-2 uppercase`}>
+          <h2 id="product-detail-title" className={`text-2xl lg:text-3xl font-bold text-[${ACCENT_COLOR}] mb-1 uppercase`}>
             {product.name}
           </h2>
+          <p className="text-sm text-gray-500 mb-2">Disponible: {product.stock}</p>
           
           <div className="text-lg font-semibold text-[var(--text-dark-primary)] mb-3">
             {displayPrice}
@@ -185,6 +199,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 hover:border-gray-400'}`}
                         aria-pressed={selectedSizeInModal === size}
                         aria-label={`Seleccionar talla ${size.replace(' MX','')}`}
+                        disabled={isOutOfStock}
                     >
                         {size.replace(/\s*MX/i, '')}
                     </button>
@@ -206,6 +221,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 hover:border-gray-400'}`}
                         aria-pressed={selectedSizeInModal === size}
                         aria-label={`Seleccionar talla ${size}`}
+                        disabled={isOutOfStock}
                     >
                         {size}
                     </button>
@@ -227,6 +243,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
                                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 hover:border-gray-400'}`}
                             aria-pressed={selectedVolumeInModal === volume}
                             aria-label={`Seleccionar volumen ${volume}ML`}
+                            disabled={isOutOfStock}
                         >
                             {volume}
                         </button>
@@ -238,16 +255,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product, onClos
             <button
                 onClick={handleAddToCartClick}
                 disabled={isAddToCartDisabled()}
-                className={`w-full border-2 border-[var(--accent-color-primary)] text-[var(--accent-color-primary)] 
+                className={`w-full border-2 border-[var(--accent-color-primary)] 
                         font-semibold py-2.5 px-4 rounded-md transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] 
                         text-sm tracking-wide uppercase focus:outline-none focus:ring-2 focus:ring-[var(--accent-color-primary)]/70 
                         focus:ring-offset-1 focus:ring-offset-[var(--light-bg-alt)]
                         ${isAddToCartDisabled() 
                             ? 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed hover:bg-gray-300 hover:text-gray-500' 
-                            : 'hover:bg-[var(--accent-color-primary)] hover:text-white'}`}
-                aria-label={`Añadir ${product.name} al carrito ${selectedSizeInModal ? `talla ${selectedSizeInModal}` : ''} ${selectedVolumeInModal ? `volumen ${selectedVolumeInModal}ML` : ''}`}
+                            : 'text-[var(--accent-color-primary)] hover:bg-[var(--accent-color-primary)] hover:text-white'}`}
+                aria-label={isOutOfStock ? `${product.name} agotado` : `Añadir ${product.name} al carrito ${selectedSizeInModal ? `talla ${selectedSizeInModal}` : ''} ${selectedVolumeInModal ? `volumen ${selectedVolumeInModal}ML` : ''}`}
             >
-                AÑADIR AL CARRITO
+                {isOutOfStock ? 'AGOTADO' : 'AÑADIR AL CARRITO'}
             </button>
           </div>
         </div>
